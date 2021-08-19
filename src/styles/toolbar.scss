@@ -1,0 +1,27 @@
+@import "./vars.scss";
+
+.toolbar, .settingbar {
+    height: $toolbar-height;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    box-shadow: 0 4px 5px gray;
+    z-index: 100;
+}
+
+.settingbar {
+    top: $toolbar-height;
+    z-index: 99;
+}
+
+.toolbar__btn {
+    height: 25px;
+    width: 25px;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    margin-left: 10px;
+}

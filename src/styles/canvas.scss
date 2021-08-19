@@ -1,0 +1,25 @@
+@import "./vars.scss";
+
+.canvas {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 86px;
+    height: 100%;
+    width: 100%;
+}
+
+canvas {
+    border: 1px solid black;
+}
+
+.resize {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    resize: both;
+    overflow: auto;
+    background-color: white;
+    border: 1px solid rgb(133, 133, 133);
+    border-radius: 7px;
+}
