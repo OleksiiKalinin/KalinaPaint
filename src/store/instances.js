@@ -1,2 +1,2 @@
-// export const originURL = 'https://kalina-paint-server.herokuapp.com';
-export const originURL = 'http://localhost:5000';
+export const originURL = 'https://kalina-paint-server.herokuapp.com';
+// export const originURL = 'http://localhost:5000';
