@@ -10,7 +10,7 @@ const SettingBar = observer(() => {
             <input 
                 type="number" 
                 id="line-width" 
-                style={{margin: '0 10px'}} 
+                style={{margin: '0 15px 0 5px'}} 
                 defaultValue={1} 
                 min={1} max={50}
                 onChange={e => toolState.setLineWidth(e.target.value)} />
@@ -18,10 +18,9 @@ const SettingBar = observer(() => {
             <input 
                 type="color" 
                 id="stroke-color" 
-                style={{margin: '0 10px'}} 
+                style={{margin: '0 15px 0 5px'}} 
                 onChange={e => toolState.setStrokeColor(e.target.value)}
-                value={toolState.strokeStyle} 
-                />
+                value={toolState.strokeStyle} />
         </div>
     );
 });

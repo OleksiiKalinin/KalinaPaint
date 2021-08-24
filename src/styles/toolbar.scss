@@ -5,11 +5,12 @@
     background-color: white;
     display: flex;
     align-items: center;
-    position: fixed;
+    position: sticky;
     top: 0;
     width: 100%;
     box-shadow: 0 4px 5px gray;
     z-index: 100;
+    padding: 0 10px;
 }
 
 .settingbar {
@@ -23,5 +24,9 @@
     border: none;
     outline: none;
     cursor: pointer;
-    margin-left: 10px;
+    margin: 5px;
+}
+
+.toolbar__btn:hover, .active {
+    background-color: #bbbbbb;
 }

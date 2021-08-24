@@ -7,6 +7,7 @@ class CanvasState {
     undoList = [];
     redoList = [];
     username = '';
+    localFile = '';
 
     constructor() {
         makeAutoObservable(this);
@@ -14,6 +15,10 @@ class CanvasState {
 
     setUserName(username) {
         this.username = username;
+    }
+    
+    setLocalFile(localFile) {
+        this.localFile = localFile;
     }
 
     setSocket(socket) {

@@ -1,9 +1,7 @@
-import { Button, Modal } from 'react-bootstrap';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef } from 'react';
 import canvasState from '../store/canvasState';
 import toolState from '../store/toolState';
-import '../styles/canvas.scss';
 import Brush from '../tools/Brush';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -11,37 +9,62 @@ import Rect from '../tools/Rect';
 import axios from 'axios';
 import Circle from '../tools/Circle';
 import Line from '../tools/Line';
-import {originURL} from '../store/instances';
+import { originURL } from '../store/instances';
+import '../styles/canvas.scss';
 
 const Canvas = observer(() => {
     const canvasRef = useRef(null);
-    const usernameRef = useRef(null);
     const canvasWrapperRef = useRef(null);
-    const [modal, setModal] = useState(true);
-    const [canvasSize, setCanvasSize] = useState({});
+    const canvasFieldRef = useRef(null);
+    const [canvasSize, setCanvasSize] = useState({ width: 520, height: 420 });
     const params = useParams();
+
+    const setImage = (image) => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.src = image;
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            setCanvasSize({ width: img.width + 20, height: img.height + 20 });
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            postImageHandler();
+        }
+    }
 
     useEffect(() => {
         canvasState.setCanvas(canvasRef.current);
-        const ctx = canvasRef.current.getContext('2d');
         axios.get(`${originURL}/image?id=${params.id}`)
-        .then(res => {
-            const img = new Image();
-            img.src = res.data;
-            // img.src = cloudinaryGetURL + params.id + '.png';
-            img.crossOrigin = "anonymous";
-            img.onload = () => {
-                canvasRef.current.width = img.width;
-                canvasRef.current.height = img.height;
-                setCanvasSize({ width: img.width + 20, height: img.height + 20 });
-                ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-                ctx.drawImage(img, 0, 0, canvasRef.current.width, canvasRef.current.height);
+            .then(res => setImage(res.data))
+            .catch(_ => canvasBG());
+
+        canvasWrapperRef.current.onmousedown = () => {
+            let flag = 0;
+            let isMouseDown = true;
+            new ResizeObserver(() => ++flag).observe(canvasWrapperRef.current);
+
+            //////////////переделать
+            window.onmouseup = () => {
+                isMouseDown = false;
+                if (flag > 1) {
+                    const { width, height } = canvasWrapperRef.current.style;
+                    canvasState.socket.send(JSON.stringify({
+                        method: 'resize',
+                        id: canvasState.sessionid,
+                        size: { width, height }
+                    }));
+                }
             }
-        })
-        .catch(err => canvasBG(ctx));
+
+            if (!isMouseDown) window.onmouseup = null;
+        }
     }, []);
 
-    const canvasBG = (ctx) => {
+    const canvasBG = () => {
+        const ctx = canvasRef.current.getContext('2d');
         let tempColor = ctx.fillStyle;
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
@@ -57,11 +80,11 @@ const Canvas = observer(() => {
             console.log('connected');
             socket.send(JSON.stringify({
                 id: params.id,
-                username: canvasState.username || 'default',
+                username: 'anonymous',
                 method: 'connection'
             }));
         }
-        socket.onmessage = (e) => {
+        socket.onmessage = e => {
             let msg = JSON.parse(e.data)
             switch (msg.method) {
                 case 'connection':
@@ -73,52 +96,43 @@ const Canvas = observer(() => {
                 case 'resize':
                     resizeCanvas(msg.size);
                     break;
-                default:
+                case 'local_file':
+                    setImage(msg.file);
                     break;
+                default: break;
             }
         }
     }, [canvasState.username]);
 
     useEffect(() => {
-        canvasWrapperRef.current.onmousedown = () => {
-            let flag = 0;
-            new ResizeObserver(() => ++flag).observe(canvasWrapperRef.current);
-
-            canvasWrapperRef.current.onmouseup = () => flag > 1 ? resizeCanvasReq() : false;
+        if (canvasState.localFile) {
+            canvasState.socket.send(JSON.stringify({
+                method: 'local_file',
+                id: canvasState.sessionid,
+                file: canvasState.localFile
+            }));
         }
-    }, []);
-
-    const resizeCanvasReq = () => {
-        canvasState.socket.send(JSON.stringify({
-            method: 'resize',
-            id: canvasState.sessionid,
-            size: {
-                width: +canvasWrapperRef.current.style.width.replace('px', ''),
-                height: +canvasWrapperRef.current.style.height.replace('px', '')
-            }
-        }));
-    }
+    }, [canvasState.localFile]);
 
     const resizeCanvas = (size) => {
-        canvasWrapperRef.current.style.width = size.width + 'px';
-        canvasWrapperRef.current.style.height = size.height + 'px';
-        canvasRef.current.width = size.width - 20;
-        canvasRef.current.height = size.height - 20;
-        // axios.get(`https://kalina-paint.herokuapp.com/image?id=${params.id}`)
+        const canvas = canvasRef.current;
+        canvasWrapperRef.current.style.width = size.width;
+        canvasWrapperRef.current.style.height = size.height;
+        canvas.width = +size.width.replace('px', '') - 20;
+        canvas.height = +size.height.replace('px', '') - 20;
         axios.get(`${originURL}/image?id=${params.id}`)
             .then(res => {
                 const img = new Image();
-                // img.src = cloudinaryGetURL + params.id + '.png';
                 img.crossOrigin = "anonymous";
                 img.src = res.data;
-                const ctx = canvasRef.current.getContext('2d');
+                const ctx = canvas.getContext('2d');
                 img.onload = () => {
-                    let x = (canvasRef.current.width - img.width) / 2;
-                    let y = (canvasRef.current.height - img.height) / 2;
-                    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-                    canvasBG(ctx);
+                    let x = Math.round((canvas.width - img.width) / 2);
+                    let y = Math.round((canvas.height - img.height) / 2);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    canvasBG();
                     ctx.drawImage(img, x, y, img.width, img.height);
-                    axios.post(`${originURL}/image?id=${params.id}`, { image: canvasRef.current.toDataURL() })
+                    postImageHandler();
                 }
             })
     }
@@ -151,44 +165,19 @@ const Canvas = observer(() => {
         canvasState.pushToUndo(canvasRef.current.toDataURL());
     }
 
-    const mouseUpHandler = async () => {
-        axios.post(`${originURL}/image?id=${params.id}`, { image: canvasRef.current.toDataURL() })
-        // axios.post(`http://localhost:5000/image?id=${params.id}`, {img: canvasRef.current.toDataURL()});
+    const mouseUpHandler = () => postImageHandler();
 
-        // const formData = new FormData();
-        // formData.append('file', canvasRef.current.toDataURL().replace('image/png', 'image/octet-stream'));
-        // formData.append('upload_preset', 'kalina-why-not');
-        // formData.append('cloud_name', 'kalina-why-not');
-        // formData.append('public_id', `paint/${params.id}`);
-        // formData.append('overwrite', true);
-        // await fetch(cloudinaryPostURL, { method: 'POST', body: formData })
-        // .then(res => res.json())
-        // .then(data => {
-        //     console.log(data);
-        // })
-        // .catch(e => console.dir(e))
+    const postImageHandler = () => {
+        axios.post(`${originURL}/image?id=${params.id}`, { image: canvasRef.current.toDataURL() });
     }
 
-    const connectHandler = () => {
-        canvasState.setUserName(usernameRef.current.value);
-        setModal(false);
-    }
+    // const connectHandler = () => {
+    //     canvasState.setUserName(usernameRef.current.value);
+    //     setModal(false);
+    // }
 
     return (
-        <div className='canvas'>
-            <Modal show={modal} onHide={() => { }}>
-                <Modal.Header>
-                    <Modal.Title>Enter your name</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <input type="text" ref={usernameRef} />
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={connectHandler}>
-                        Sign in
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+        <div className='canvas' ref={canvasFieldRef}>
             <div
                 ref={canvasWrapperRef}
                 className='resize'
@@ -197,7 +186,9 @@ const Canvas = observer(() => {
                 <canvas
                     ref={canvasRef}
                     onMouseDown={mouseDownHandler}
-                    onMouseUp={mouseUpHandler} />
+                    onMouseUp={mouseUpHandler}
+                    width={canvasSize.width - 20}
+                    height={canvasSize.height - 20} />
             </div>
         </div>
     );

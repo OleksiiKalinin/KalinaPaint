@@ -1,22 +1,24 @@
 @import "./vars.scss";
 
 .canvas {
+    flex: 1;
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding-top: 86px;
+    align-items: flex-start;
+    padding: 15px 10px 10px 10px;
     height: 100%;
     width: 100%;
 }
 
 canvas {
     border: 1px solid black;
+    margin: 8px;
 }
 
 .resize {
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: flex-start;
+    align-items: flex-start;
     resize: both;
     overflow: auto;
     background-color: white;
