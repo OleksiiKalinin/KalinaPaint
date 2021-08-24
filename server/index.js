@@ -6,9 +6,9 @@ const cloudinary = require('cloudinary').v2;
 const {Server} = require("ws");
 
 cloudinary.config({ 
-    cloud_name: 'kalina-why-not', 
-    api_key: '464273642172161', 
-    api_secret: 'qyK4YvesYrYO79oLmSjXpBM0-Wg',
+    cloud_name: 'secret:)', 
+    api_key: 'secret:)', 
+    api_secret: 'secret:)',
     secure: true
   });
 
