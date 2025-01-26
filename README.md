@@ -1,6 +1,4 @@
-Developing started in August 2021 (not finished yet)
-
-Link: https://kalina-paint.herokuapp.com/
+Pet project.
 
 PLEASE, READ THE DESCRIPTION!
 
